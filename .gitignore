@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.log
+*.jsonl
+SW/control_center/config.json
+SW/control_center/config.json.bak*

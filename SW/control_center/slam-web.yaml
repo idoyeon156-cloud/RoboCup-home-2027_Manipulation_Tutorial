@@ -1,0 +1,83 @@
+# Physical mapping backend; SW/robot/slam_scan.py owns input filtering and motion gating.
+# See SW/robot/slam-scan-processing.md for sensor timing and common-time scan semantics.
+slam_toolbox:
+  ros__parameters:
+    use_sim_time: false
+
+    # Plugin params
+    solver_plugin: solver_plugins::CeresSolver
+    ceres_linear_solver: SPARSE_NORMAL_CHOLESKY
+    ceres_preconditioner: SCHUR_JACOBI
+    ceres_trust_strategy: LEVENBERG_MARQUARDT
+    ceres_dogleg_type: TRADITIONAL_DOGLEG
+    ceres_loss_function: None
+
+    # ROS Parameters
+    odom_frame: odom
+    map_frame: map
+    base_frame: base_link
+    scan_topic: /scan_slam
+    use_map_saver: true
+    mode: mapping #localization
+
+    # if you'd like to immediately start continuing a map at a given pose
+    # or at the dock, but they are mutually exclusive, if pose is given
+    # will use pose
+    #map_file_name: test_steve
+    # map_start_pose: [0.0, 0.0, 0.0]
+    #map_start_at_dock: true
+
+    debug_logging: false
+    throttle_scans: 1
+    transform_publish_period: 0.02 #if 0 never publishes odometry
+    map_update_interval: 1.0
+    resolution: 0.05
+    # Humble 2.6.10 has no restamp_tf; slam-runtime.launch.py owns the TF clock adapter.
+    min_laser_range: 0.35 # metadata; the SLAM front-end explicitly turns excluded ranges into NaN
+    max_laser_range: 8.0 # same limit as g2_slam_scan in SW/robot/config/slam_scan.yaml
+    minimum_time_interval: 0.0 # the front-end alone applies the 0.2 s motion/time gate
+    transform_timeout: 0.2
+    tf_buffer_duration: 30.
+    stack_size_to_use: 40000000 #// program needs a larger stack size to serialize large maps
+    enable_interactive_mode: true
+
+    # General Parameters
+    use_scan_matching: true
+    use_scan_barycenter: true
+    # Keep Humble's translation gate open for pure rotations. The front-end accepts
+    # translation OR heading change, and suppresses repeated stationary constraints.
+    minimum_travel_distance: 0.0
+    minimum_travel_heading: 0.1
+    scan_buffer_size: 10
+    scan_buffer_maximum_scan_distance: 10.0
+    link_match_minimum_response_fine: 0.1  
+    link_scan_maximum_distance: 1.5
+    loop_search_maximum_distance: 3.0
+    do_loop_closing: true 
+    loop_match_minimum_chain_size: 10           
+    loop_match_maximum_variance_coarse: 3.0  
+    loop_match_minimum_response_coarse: 0.35    
+    loop_match_minimum_response_fine: 0.45
+
+    # Correlation Parameters - Correlation Parameters
+    correlation_search_space_dimension: 0.3 # smaller jumps along the partitions (sim 0.5)
+    correlation_search_space_resolution: 0.01
+    correlation_search_space_smear_deviation: 0.1 
+
+    # Correlation Parameters - Loop Closure Parameters
+    loop_search_space_dimension: 8.0
+    loop_search_space_resolution: 0.05
+    loop_search_space_smear_deviation: 0.03
+
+    # Scan Matcher Parameters
+    distance_variance_penalty: 0.2 # retain existing prior; low-speed calibration is not a high-speed guarantee
+    angle_variance_penalty: 0.4
+
+    fine_search_angle_offset: 0.00349     
+    coarse_search_angle_offset: 0.349   
+    coarse_angle_resolution: 0.0349        
+    minimum_angle_penalty: 0.5 # (sim 0.9)
+    minimum_distance_penalty: 0.2 # let far-off matches lose more score (sim 0.5)
+    use_response_expansion: true
+    min_pass_through: 2 # cell pass-count threshold; this does not correct scan poses
+    occupancy_threshold: 0.1

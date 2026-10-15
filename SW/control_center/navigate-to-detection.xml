@@ -1,0 +1,18 @@
+<!-- Guarded table approach: replan at 2 Hz; the Python owner tries another
+     observed table side if planning/control fails. No unrelated spin/backup loop. -->
+<root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <PipelineSequence name="NavigateToTableStage">
+      <RateController hz="2.0">
+        <RecoveryNode number_of_retries="1" name="TableStagePlan">
+          <ComputePathToPose goal="{goal}" path="{path}" planner_id="GridBased"/>
+          <ClearEntireCostmap name="ClearTableGlobal" service_name="global_costmap/clear_entirely_global_costmap"/>
+        </RecoveryNode>
+      </RateController>
+      <RecoveryNode number_of_retries="1" name="TableStageControl">
+        <FollowPath path="{path}" controller_id="GraspApproach" goal_checker_id="grasp_stage_checker"/>
+        <ClearEntireCostmap name="ClearTableLocal" service_name="local_costmap/clear_entirely_local_costmap"/>
+      </RecoveryNode>
+    </PipelineSequence>
+  </BehaviorTree>
+</root>
